@@ -1,22 +1,20 @@
 # Neural Decoding of Visual Stimuli in Mouse Visual Cortex
 
-Linear decoding of visual stimulus category from two-photon population activity in four mouse
-visual areas (V1, LM, AL, RL), using the MICrONS Phase 3 functional dataset. We ask whether
-decodability varies systematically along the putative cortical hierarchy, and whether any such
-differences survive controls for population size and behavioural state.
+Machine learning analysis of visual stimulus decoding from two-photon population activity across four mouse visual cortical areas (V1, LM, AL, RL), using the MICrONS Phase 3 functional dataset.
 
-> **Main result.** On the finest contrast — discriminating three *natural* video categories
-> (Cinematic / Sports1M / Rendered) — **LM is the best decoder in 9/10 sessions**, beating V1 by
-> Δ = +0.031 (significant in 10/10 sessions) and AL/RL by Δ ≈ +0.05 (9–10/10), Bonferroni-corrected.
-> This inverts the naive expectation of a strict V1 → higher-area gradient of categorical
-> abstraction. Coarse contrasts (natural vs. parametric; Monet2 vs. Trippy) are at ceiling in every
-> area and cannot distinguish the hierarchy at all.
+The project investigates whether visual stimulus categories can be decoded from neural population activity and whether decoding performance varies systematically across cortical areas, while controlling for population size and behavioural state.
+
+## Main result
+
+For the most fine-grained contrast — discrimination between three natural video categories (Cinematic, Sports1M, and Rendered) — LM achieved the highest decoding performance in 9 out of 10 sessions.
+
+LM exceeded V1 by Δ = +0.031 and AL/RL by approximately Δ = +0.05, with statistical significance assessed using Bonferroni-corrected paired comparisons.
+
+Coarser contrasts, including natural vs. parametric stimuli and Monet2 vs. Trippy, reached near-ceiling performance across all areas and therefore provided little separation between cortical regions.
 
 ![Pairwise area differences in balanced accuracy](figures/fig2_pairwise_area_differences.png)
 
-*Pairwise area differences in balanced accuracy (behaviour-cleaned features, mean across 10
-sessions). The right panel — the fine natural contrast — carries the effect: LM beats every other
-area. Parenthesised counts give the number of sessions significant after Bonferroni correction.*
+*Pairwise differences in balanced accuracy across cortical areas, averaged across 10 sessions. The fine natural-category contrast shows the clearest cross-area differences.*
 
 **[Full report (PDF)](documents/report.pdf)** — 11 pages, 14 figures.
 
@@ -24,112 +22,110 @@ area. Parenthesised counts give the number of sessions significant after Bonferr
 
 ## Repository layout
 
-| Folder | Contents |
+| Path | Description |
 |---|---|
-| [`category_decoding/`](01_category_decoding) | Trial-mean decoding across areas: natural vs. parametric, Monet2 vs. Trippy, and the three-way natural contrast. Neuron-count-matched subsampling, permutation nulls, paired area statistics. **Produces the main result.** |
-| [`time_resolved_decoding/`](02_time_resolved_decoding) | Per-frame clip-category decoding on a single session, LR vs. linear SVM, with temporal averaging. |
-| [`extra/`](extra) | Superseded single-session pipeline. Not part of the report; see the folder README. |
-| [`utils/`](utils), [`reader.py`](reader.py) | Data access and shared helpers. |
-| [`docs/DATASET.md`](docs/DATASET.md) | HDF5 schema and `MicronsReader` API. |
-| [`documents/`](documents) | Report source and PDF. |
+| [`01_category_decoding/`](01_category_decoding) | Trial-mean decoding across cortical areas for natural vs. parametric stimuli, Monet2 vs. Trippy, and the three-way natural-category contrast. Includes neuron-count matching, permutation tests, behavioural regression, and paired area comparisons. |
+| [`02_time_resolved_decoding/`](02_time_resolved_decoding) | Time-resolved decoding of natural video categories using logistic regression and linear SVM, including temporal averaging analyses. |
+| [`extra/`](extra) | Earlier single-session analysis pipeline, retained for reference but not included in the final report. |
+| [`utils/`](utils) and [`reader.py`](reader.py) | Shared utilities and data-access functions. |
+| [`docs/DATASET.md`](docs/DATASET.md) | Description of the MICrONS HDF5 dataset structure and `MicronsReader` API. |
+| [`documents/`](documents) | Final report and related documents. |
 
 ## Research questions
 
-| | Question | Chance | Where |
-|---|---|---|---|
+| Question | Decoding task | Chance level | Analysis |
+|---|---|---:|---|
 | **Q1a** | Natural vs. parametric stimuli | 0.50 | `01_category_decoding/` |
-| **Q1b** | Parametric discrimination (Monet2 vs. Trippy) | 0.50 | `01_category_decoding/` |
-| **Q1c** | Natural discrimination (Cinematic vs. Sports1M vs. Rendered) | 0.33 | `01_category_decoding/` |
-| **Q2** | Time-resolved, per-frame clip-category decoding | 0.33 | `02_time_resolved_decoding/` |
+| **Q1b** | Parametric discrimination: Monet2 vs. Trippy | 0.50 | `01_category_decoding/` |
+| **Q1c** | Natural-category discrimination: Cinematic vs. Sports1M vs. Rendered | 0.33 | `01_category_decoding/` |
+| **Q2** | Time-resolved per-frame natural-category decoding | 0.33 | `02_time_resolved_decoding/` |
 
 ## Results
 
-**Trial-mean decoding — balanced accuracy at matched neuron count (mean ± SD, 10 sessions):**
+### Trial-mean decoding
 
-| | V1 | LM | AL | RL |
-|---|---|---|---|---|
-| Q1a *(chance 0.50)* | **0.959** ± 0.016 | 0.951 ± 0.015 | 0.918 ± 0.020 | 0.936 ± 0.022 |
-| Q1b *(chance 0.50)* | **0.994** ± 0.006 | 0.988 ± 0.009 | 0.979 ± 0.019 | 0.980 ± 0.015 |
-| Q1c *(chance 0.33)* | 0.647 ± 0.033 | **0.677** ± 0.036 | 0.621 ± 0.061 | 0.622 ± 0.058 |
+Balanced accuracy at matched neuron count, reported as mean ± SD across 10 sessions:
 
-All 120/120 (session × area × question) cells decode significantly above the shuffle-label null.
-Q1a and Q1b saturate; Q1c is the only contrast that separates the areas, and there LM leads.
+| Task | V1 | LM | AL | RL |
+|---|---:|---:|---:|---:|
+| **Q1a** — Natural vs. parametric *(chance = 0.50)* | **0.959 ± 0.016** | 0.951 ± 0.015 | 0.918 ± 0.020 | 0.936 ± 0.022 |
+| **Q1b** — Monet2 vs. Trippy *(chance = 0.50)* | **0.994 ± 0.006** | 0.988 ± 0.009 | 0.979 ± 0.019 | 0.980 ± 0.015 |
+| **Q1c** — Natural categories *(chance = 0.33)* | 0.647 ± 0.033 | **0.677 ± 0.036** | 0.621 ± 0.061 | 0.622 ± 0.058 |
 
-**Time-resolved decoding — peak balanced accuracy, Session 5_6 (chance 33.3%):**
+All 120 session × area × question combinations decoded significantly above the shuffle-label null.
 
-| Window | Clf. | V1 | LM | AL | RL | Avg. |
-|---|---|---|---|---|---|---|
-| *w* = 1 | LR | 41.4% | 44.2% | **47.4%** | 42.6% | 43.9% |
-| *w* = 1 | SVM | 40.2% | 43.5% | 44.6% | 41.2% | 42.5% |
-| *w* = 5 | LR | 46.5% | 48.4% | **50.2%** | 48.5% | 48.4% |
-| *w* = 5 | SVM | 44.2% | 46.6% | 47.5% | 47.2% | 46.4% |
+Q1a and Q1b showed near-ceiling performance across areas. Q1c provided the clearest separation between cortical regions, with LM achieving the highest mean decoding accuracy.
 
-Per-frame decoding is significant everywhere (*p* < 10⁻⁹; 0/50 shuffles exceeded the true accuracy)
-but stays below 50%. Five-frame temporal averaging adds a uniform ≈ +4.5 points in every area,
-consistent with category information being distributed over time rather than locked to stimulus
-onset; cross-area differences shrink under averaging, suggesting broadly distributed representation.
+### Time-resolved decoding
 
-**Behavioural confounds.** Regressing out pupil (4 features) and treadmill velocity before
-trial-averaging costs ≈ 0.03 accuracy on Q1a (largest in AL, −0.038): part of the coarse
-natural-vs-parametric contrast reflects covariation of arousal and locomotion with stimulus class.
-For Q1b and Q1c the effect is below 0.01 and inconsistent in sign — the LM advantage is **not** a
-behavioural artefact. All headline results are reported on cleaned features as the conservative
-estimate.
+Peak balanced accuracy for Session `5_6` *(chance = 33.3%)*:
 
-**Confusion structure.** Cinematic ↔ Rendered is the dominant error in every area (off-diagonals
-0.19–0.23); Sports1M is the most reliably classified class (diagonal 0.64–0.71), plausibly because
-of its distinctive fast coherent motion. LM's advantage is spread across all three classes rather
-than driven by one.
+| Window | Classifier | V1 | LM | AL | RL | Average |
+|---|---|---:|---:|---:|---:|---:|
+| *w* = 1 | Logistic Regression | 41.4% | 44.2% | **47.4%** | 42.6% | 43.9% |
+| *w* = 1 | Linear SVM | 40.2% | 43.5% | 44.6% | 41.2% | 42.5% |
+| *w* = 5 | Logistic Regression | 46.5% | 48.4% | **50.2%** | 48.5% | 48.4% |
+| *w* = 5 | Linear SVM | 44.2% | 46.6% | 47.5% | 47.2% | 46.4% |
+
+Per-frame decoding was significantly above chance in every area (*p* < 10⁻⁹; 0/50 shuffles exceeded the observed accuracy), although performance remained below 50%.
+
+Five-frame temporal averaging improved decoding by approximately 4.5 percentage points across areas, consistent with category information being distributed over time rather than concentrated at stimulus onset.
+
+### Behavioural confounds
+
+Regressing out pupil-related features and treadmill velocity before trial averaging reduced accuracy by approximately 0.03 for Q1a, with the largest reduction in AL (−0.038).
+
+For Q1b and Q1c, the effect remained below 0.01 and was inconsistent in sign. The LM advantage observed in Q1c therefore persisted after behavioural cleaning.
+
+### Confusion structure
+
+For Q1c, Cinematic ↔ Rendered was the dominant source of confusion across all areas, with off-diagonal values of approximately 0.19–0.23.
+
+Sports1M was the most consistently classified category, with diagonal values of approximately 0.64–0.71. The LM advantage was distributed across the three classes rather than being driven by a single category.
 
 ## Methods
 
-- **Data.** 10 of 14 MICrONS sessions, selected at a matched imaging rate (~6.30 Hz; sessions 9_3,
-  9_4, 9_6 excluded at 8.62–9.62 Hz; 7_4 excluded as experimentally corrupted). 464 trials per
-  session: 128 Cinematic, 128 Sports1M, 128 Rendered, 40 Monet2, 40 Trippy.
-- **Preprocessing.** First 3 frames (≈475 ms) discarded for response-onset lag; per-neuron trial
-  means computed per anatomical area. "Clean" features are residuals after regressing each neuron on
-  4 pupil channels and treadmill velocity.
-- **Decoder.** `StandardScaler → LogisticRegression` (ℓ2, *C* = 1, balanced class weights);
-  balanced accuracy under 5-fold stratified cross-validation.
-- **Population-size control.** Areas differ in recorded neuron count, which inflates accuracy
-  independently of coding quality. Cross-area comparisons are therefore made at the matched count
-  *N*min (287–468, session-dependent) over 50 random subsamples.
-- **Statistics.** Shuffle-label nulls (100 permutations per cell); paired Wilcoxon signed-rank
-  across sessions, Bonferroni-corrected within question.
-- **Time-resolved.** Session 5_6 (8,592 neurons; 384 natural trials; 72 timepoints; 468 neurons per
-  area). Per-frame response vectors decoded independently at each timepoint with LR and linear SVM.
-  GroupKFold by clip hash prevents the same clip appearing in both train and test folds. Temporal
-  averaging tested at *w* = 5 frames.
+- **Data.** Ten MICrONS sessions acquired at a matched imaging rate (~6.30 Hz) were included. Sessions `9_3`, `9_4`, and `9_6` were excluded because they were acquired at a higher imaging rate (8.62–9.62 Hz), while session `7_4` was excluded because it was experimentally corrupted. Each included session contained 464 trials: 128 Cinematic, 128 Sports1M, 128 Rendered, 40 Monet2, and 40 Trippy.
+
+- **Preprocessing.** The first three frames (~475 ms) were discarded to account for response-onset lag. Trial-mean neural responses were then computed separately for each cortical area. Behaviour-cleaned features were obtained by regressing each neuron's activity on four pupil-related variables and treadmill velocity.
+
+- **Decoder.** Neural activity was decoded using a `StandardScaler → LogisticRegression` pipeline with ℓ2 regularization, `C = 1`, balanced class weights, and 5-fold stratified cross-validation. Performance was measured using balanced accuracy.
+
+- **Population-size control.** Because cortical areas contained different numbers of recorded neurons, cross-area comparisons were performed after matching population size to the minimum neuron count available within each session (`Nmin`, ranging from 287 to 468 neurons). Fifty random neuron subsamples were evaluated for each comparison.
+
+- **Statistics.** Statistical significance against chance was assessed using shuffle-label null distributions with 100 permutations per session, area, and decoding task. Cross-area comparisons used paired Wilcoxon signed-rank tests across sessions, with Bonferroni correction applied within each research question.
+
+- **Time-resolved decoding.** Time-resolved analyses were performed on Session `5_6`, containing 8,592 neurons, 384 natural-video trials, and 72 timepoints. Population size was matched to 468 neurons per area. Each timepoint was decoded independently using logistic regression and a linear SVM. `GroupKFold` splitting by clip hash prevented the same video clip from appearing in both training and test folds. Temporal averaging was additionally evaluated using a five-frame window.
 
 ## Limitations
 
-Linear decoders cannot recover nonlinearly-formatted information: higher accuracy in LM means
-category information is more *linearly accessible* there, not that LM "represents" categories more
-than V1. Class counts are imbalanced (384 natural vs. 80 parametric trials), and *N*min varies
-across sessions, so within-session contrasts are matched but cross-session pooling is not.
+The analyses rely on linear decoders and therefore quantify how linearly accessible stimulus-category information is in each cortical area. Higher decoding accuracy in LM should not be interpreted as evidence that LM intrinsically “represents” visual categories more strongly than V1.
+
+The dataset also contains imbalanced class counts, with 384 natural-video trials and 80 parametric-stimulus trials per session. In addition, the matched population size (`Nmin`) varies across sessions, meaning that comparisons are controlled within each session but are not based on an identical neuron count across the full dataset.
 
 ## Reproducing
 
 ```bash
-git clone https://github.com/annanotaro/Microns-visual-decoding
-cd Microns-visual-decodinguv sync                      # or: pip install -r requirements.txt
+git clone https://github.com/GaiaGro/microns-visual-decoding.git
+cd microns-visual-decoding
+
+uv sync                      # or: pip install -r requirements.txt
+
 cp .env.example .env         # point DATA_PATH at microns.h5
+
 python main_runner.py --question 1
 ```
 
-Data is pulled from [`NeuroBLab/MICrONS`](https://huggingface.co/datasets/NeuroBLab/MICrONS) on
-first run. See [`docs/DATASET.md`](docs/DATASET.md) for the HDF5 schema and reader API.
+Data is pulled from [`NeuroBLab/MICrONS`](https://huggingface.co/datasets/NeuroBLab/MICrONS) on first run. See [`docs/DATASET.md`](docs/DATASET.md) for the HDF5 schema and reader API.
 
 ## Authors
 
 Research project supervised by **Prof. Alessandro Sanzeni**, Bocconi University, March–April 2026.
 
-Gaia Grossi · Max David · Leo Arthur Morvan · **Anna Notaro** · Beatrice Porta
+**Gaia Grossi** · Max David · Leo Arthur Morvan · Anna Notaro · Beatrice Porta
 
-*Anna Notaro: `01_category_decoding/` in full — decoding pipeline, neuron-count-matched
-subsampling, behavioural regression, and the cross-area statistical comparisons (Figures 1–4).*
+*Gaia Grossi: `02_time_resolved_decoding/` — time-resolved per-frame decoding, logistic regression and linear SVM analyses, GroupKFold validation, and temporal averaging.*
 
 ## References
 
-Stringer et al., *Nature* 2019 · Goltstein et al., *Nature Neuroscience* 2021 · Chen et al.,
-*PLOS Computational Biology* 2024 · Ding et al., *Nature* 2025 (MICrONS functional connectomics)
+Stringer et al., *Nature* 2019 · Goltstein et al., *Nature Neuroscience* 2021 · Chen et al., *PLOS Computational Biology* 2024 · Ding et al., *Nature* 2025 (MICrONS functional connectomics)
